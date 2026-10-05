@@ -28,7 +28,6 @@ async function addMapboxSatellite(map, layerControl, onError, previousBase) {
       onError("Imaginile Mapbox nu au putut fi încărcate. Alege Satelit Esri sau OpenStreetMap.");
     });
     layerControl.addBaseLayer(satellite,"Mapbox Satellite");
-    if (map.hasLayer(previousBase)) map.removeLayer(previousBase);
-    satellite.addTo(map);
+
   } catch { onError("Mapbox nu este disponibil. Verifică tokenul și domeniile permise."); }
 }
