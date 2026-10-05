@@ -17,3 +17,7 @@ Open http://localhost:8000.
 Copy `dist/mapbox-config.example.json` to `dist/mapbox-config.json` and insert your public Mapbox token. Restrict the token to your deployment domains. The real configuration is excluded from Git.
 
 The repository includes the network layers used by the map. `.openai/hosting.json` records the existing Sites hosting project.
+
+## GitHub Pages
+
+Pushes to `main` automatically deploy the `dist` directory through GitHub Actions. Enable GitHub Pages with GitHub Actions as the publishing source. For OROC, the optional `MAPBOX_PUBLIC_TOKEN` repository variable supplies the public Mapbox token; permit the Pages domain in its URL restrictions.
