@@ -5,7 +5,7 @@ from pathlib import Path
 from zipfile import ZipFile
 from lxml import etree as ET
 
-MATERIALS=('Concrete','Composite','Wood','Steel')
+MATERIALS=('Concrete','Composite','Wood','Steel','Necunoscut')
 COLORS={'Orange Romania SA':'#ff7900','Orange Communications SA':'#e6007e'}
 def owner_color(owner):return COLORS.get(owner,'#22c55e')
 def main():
@@ -41,7 +41,7 @@ def main():
                     assert values.get('O')=='Longitude (degrees)' and values.get('P')=='Latitude (degrees)'
                     headers_by_sheet[sheet]=values
                 if number<5:continue
-                sheet_counts[sheet]+=1;material=values.get('G','').strip();source[material]+=1
+                sheet_counts[sheet]+=1;material=values.get('G','').strip() or 'Necunoscut';source[material]+=1
                 if material not in MATERIALS:excluded['material:'+material]+=1;continue
                 try:
                     lng,lat=float(values['O']),float(values['P'])
@@ -50,6 +50,7 @@ def main():
                 owner=values.get('I','').strip();color=owner_color(owner);owners[color]+=1
                 props={k:values[c].strip() for c,k in {'E':'n','D':'ID','G':'Material','I':'Owner','F':'Construction Status','H':'Usage','J':'Owner Alias','K':'ORO Alias','L':'Equipment(s)'}.items() if values.get(c)}
                 props['_color']=color
+                props['Material']=material
                 shard=f'{math.floor(lng*10)}_{math.floor(lat*10)}';key=(material,shard)
                 b=extents.setdefault(key,[lng,lat,lng,lat]);b[0]=min(b[0],lng);b[1]=min(b[1],lat);b[2]=max(b[2],lng);b[3]=max(b[3],lat)
                 db.execute('INSERT INTO points VALUES (?,?,?)',(material,shard,json.dumps([props,[lng,lat]],ensure_ascii=False,separators=(',',':'))));counts[key]+=1
