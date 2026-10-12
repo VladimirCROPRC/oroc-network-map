@@ -1,8 +1,9 @@
-function cablePopup(feature,layerId) {
+function cablePopup(feature,layerId,layerName) {
   const p=feature.properties||{},escape=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const isBackbone=layerId==="magistrale-backbone-cables"||Boolean(p.n&&p.route);
   const structure=(type,id)=>[type,id].filter(value=>value!==undefined&&value!==null&&value!=="").join(" · ");
-  const rows=layerId==="magistrale-backbone-cables"?[["Nume",p.n],["Traseu",p.route]]:[["Proprietar",p.pr],["Status",p.st],["Tip",p.tp],["Structură capăt A",structure(p.ta,p.ia)],["Structură capăt Z",structure(p.tz,p.iz)],["Cabluri",p.cb]];
-  if(layerId==="magistrale-backbone-cables"){
+  const rows=isBackbone?[["Nume",p.n],["route",p.route]]:[["Proprietar",p.pr],["Status",p.st],["Tip",p.tp],["Structură capăt A",structure(p.ta,p.ia)],["Structură capăt Z",structure(p.tz,p.iz)],["Cabluri",p.cb]];
+  if(isBackbone){
     const geometry=feature.geometry||{},lines=geometry.type==="LineString"?[geometry.coordinates]:geometry.type==="MultiLineString"?geometry.coordinates:[],radius=6371008.8;
     let meters=0;
     for(const line of lines)for(let i=1;i<line.length;i++){
@@ -11,5 +12,5 @@ function cablePopup(feature,layerId) {
     }
     rows.push(["Lungime cablu",(meters/1000).toLocaleString("ro-RO",{minimumFractionDigits:2,maximumFractionDigits:2})+" km"]);
   }
-  return '<div class="cable-popup-title">'+escape(p.n||"Cablu")+'</div><table class="cable-popup-table"><tbody>'+rows.map(([label,value])=>'<tr><th scope="row">'+escape(label)+'</th><td>'+escape(value===undefined||value===null||value===""?"—":value)+'</td></tr>').join("")+'</tbody></table>';
+  return '<div class="cable-popup-title">'+escape(isBackbone?(layerName||"Cabluri Backbone"):(p.n||"Cablu"))+'</div><table class="cable-popup-table"><tbody>'+rows.map(([label,value])=>'<tr><th scope="row">'+escape(label)+'</th><td>'+escape(value===undefined||value===null||value===""?"—":value)+'</td></tr>').join("")+'</tbody></table>';
 }
