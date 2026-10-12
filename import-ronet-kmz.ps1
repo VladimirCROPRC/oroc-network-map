@@ -63,10 +63,12 @@ foreach ($style in $kml.SelectNodes('//k:Style',$ns)) {
 }
 } finally { $iconZip.Dispose() }
 
-$features = [Collections.Generic.List[object]]::new()
-$allX = [Collections.Generic.List[double]]::new()
-$allY = [Collections.Generic.List[double]]::new()
-$geometryTypes = @{}
+$cableFeatures = [Collections.Generic.List[object]]::new()
+$piFeatures = [Collections.Generic.List[object]]::new()
+$pablFeatures = [Collections.Generic.List[object]]::new()
+$cableX = [Collections.Generic.List[double]]::new(); $cableY = [Collections.Generic.List[double]]::new()
+$piX = [Collections.Generic.List[double]]::new(); $piY = [Collections.Generic.List[double]]::new()
+$pablX = [Collections.Generic.List[double]]::new(); $pablY = [Collections.Generic.List[double]]::new()
 $featureIndex = 0
 foreach ($placemark in $root.SelectNodes('.//k:Placemark',$ns)) {
   $nameNode = $placemark.SelectSingleNode('k:name',$ns)
@@ -86,7 +88,7 @@ foreach ($placemark in $root.SelectNodes('.//k:Placemark',$ns)) {
   foreach ($line in $placemark.SelectNodes('.//k:LineString/k:coordinates',$ns)) {
     $coordinates = Read-CoordinateTuples $line.InnerText
     if ($coordinates.Count -ge 2) {
-      foreach ($pair in $coordinates) { $allX.Add([double]$pair[0]); $allY.Add([double]$pair[1]) }
+      foreach ($pair in $coordinates) { $cableX.Add([double]$pair[0]); $cableY.Add([double]$pair[1]) }
       $lines.Add($coordinates)
     }
   }
@@ -97,8 +99,7 @@ foreach ($placemark in $root.SelectNodes('.//k:Placemark',$ns)) {
     } else {
       [ordered]@{ type='MultiLineString'; coordinates=$lines.ToArray() }
     }
-    $geometryTypes[$geometry.type] = 1 + ($geometryTypes[$geometry.type] ?? 0)
-    $features.Add([ordered]@{ type='Feature'; id="ronet-$featureIndex"; properties=$properties; geometry=$geometry })
+    $cableFeatures.Add([ordered]@{ type='Feature'; id="ronet-cable-$featureIndex"; properties=$properties; geometry=$geometry })
     continue
   }
 
@@ -106,51 +107,60 @@ foreach ($placemark in $root.SelectNodes('.//k:Placemark',$ns)) {
     $coordinates = Read-CoordinateTuples $point.InnerText
     if (-not $coordinates.Count) { continue }
     $coordinate = $coordinates[0]
-    foreach ($pair in $coordinates) { $allX.Add([double]$pair[0]); $allY.Add([double]$pair[1]) }
+    $targetFeatures = $null; $targetX = $null; $targetY = $null
+    if ($folder -like 'PI_PT*') { $targetFeatures=$piFeatures; $targetX=$piX; $targetY=$piY }
+    elseif ($folder -like 'PABL_PT*') { $targetFeatures=$pablFeatures; $targetX=$pablX; $targetY=$pablY }
+    else { throw "Unrecognized Ronet point folder: $folder" }
+    foreach ($pair in $coordinates) { $targetX.Add([double]$pair[0]); $targetY.Add([double]$pair[1]) }
     $pointProperties = [ordered]@{ n=$name; folder=$folder }
     if ($style.icon) { $pointProperties._icon = $style.icon }
     $featureIndex++
-    $geometryTypes['Point'] = 1 + ($geometryTypes['Point'] ?? 0)
-    $features.Add([ordered]@{ type='Feature'; id="ronet-$featureIndex"; properties=$pointProperties; geometry=[ordered]@{ type='Point'; coordinates=$coordinate } })
+    $targetFeatures.Add([ordered]@{ type='Feature'; id="ronet-point-$featureIndex"; properties=$pointProperties; geometry=[ordered]@{ type='Point'; coordinates=$coordinate } })
   }
 }
-if (-not $features.Count) { throw 'No supported placemarks found in Ronet folder' }
+if (-not $cableFeatures.Count -or -not $piFeatures.Count -or -not $pablFeatures.Count) { throw 'One or more Ronet layers are empty' }
 
-$geoPath = Join-Path $layerDir 'ronet.geojson'
-$geoJson = [ordered]@{ type='FeatureCollection'; name='Ronet'; features=$features.ToArray() } | ConvertTo-Json -Depth 100 -Compress
-[IO.File]::WriteAllText($geoPath,$geoJson,[Text.UTF8Encoding]::new($false))
-
-$bounds = @(
-  ($allX | Measure-Object -Minimum).Minimum,
-  ($allY | Measure-Object -Minimum).Minimum,
-  ($allX | Measure-Object -Maximum).Maximum,
-  ($allY | Measure-Object -Maximum).Maximum
-)
-$gzipPath = Join-Path $layerDir 'ronet.geojson.gz'
-& node -e 'const fs=require("fs"),z=require("zlib");fs.writeFileSync(process.argv[1],z.gzipSync(fs.readFileSync(process.argv[2]),{level:9}))' $gzipPath $geoPath
-if ($LASTEXITCODE -ne 0) { throw 'Could not compress Ronet GeoJSON' }
-Remove-Item -LiteralPath $geoPath
+function Get-Bounds($xs,$ys) {
+  return @(($xs | Measure-Object -Minimum).Minimum,($ys | Measure-Object -Minimum).Minimum,($xs | Measure-Object -Maximum).Maximum,($ys | Measure-Object -Maximum).Maximum)
+}
+function Write-GzipLayer([string]$stem,[string]$name,[object[]]$items) {
+  $jsonPath = Join-Path $layerDir ($stem + '.geojson')
+  $gzipPath = Join-Path $layerDir ($stem + '.geojson.gz')
+  $json = [ordered]@{ type='FeatureCollection'; name=$name; features=$items } | ConvertTo-Json -Depth 100 -Compress
+  [IO.File]::WriteAllText($jsonPath,$json,[Text.UTF8Encoding]::new($false))
+  & node -e 'const fs=require("fs"),z=require("zlib");fs.writeFileSync(process.argv[1],z.gzipSync(fs.readFileSync(process.argv[2]),{level:9}))' $gzipPath $jsonPath
+  if ($LASTEXITCODE -ne 0) { throw "Could not compress $name GeoJSON" }
+  Remove-Item -LiteralPath $jsonPath
+  return [pscustomobject]@{ file=('layers/' + $stem + '.geojson.gz'); path=$gzipPath; bytes=(Get-Item $gzipPath).Length }
+}
+$cablesFile = Write-GzipLayer 'ronet-cables' 'RONET Cables' $cableFeatures.ToArray()
+$piFile = Write-GzipLayer 'ronet-pi' 'PI' $piFeatures.ToArray()
+$pablFile = Write-GzipLayer 'ronet-pabl' 'PABL' $pablFeatures.ToArray()
+$cablesBounds = Get-Bounds $cableX $cableY
+$piBounds = Get-Bounds $piX $piY
+$pablBounds = Get-Bounds $pablX $pablY
 
 $manifestPath = Join-Path $AppRoot 'dist\layers.json'
 $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json -AsHashtable
-$previous = @($manifest.layers | Where-Object { $_.id -eq 'fo-ronet' })
+$ronetIds = @('fo-ronet','fo-ronet-cables','fo-ronet-pi','fo-ronet-pabl')
+$previous = @($manifest.layers | Where-Object { $_.id -in $ronetIds })
 $baseFeatures = [int]$manifest.totals.features
 $baseBytes = [long]$manifest.totals.bytes
 foreach ($layer in $previous) { $baseFeatures -= [int]$layer.features; $baseBytes -= [long]$layer.bytes }
-$manifest.layers = @($manifest.layers | Where-Object { $_.id -ne 'fo-ronet' })
-$fileBytes = (Get-Item $gzipPath).Length
-$manifest.layers += [ordered]@{
-  id='fo-ronet'; name='Ronet'; group='FO Cables'; features=$features.Count
-  source=[IO.Path]::GetFileName($KmzPath); geometryTypes=$geometryTypes; bytes=$fileBytes
-  bounds=$bounds; color='#ffffff'; file='layers/ronet.geojson.gz'; defaultActive=$false
-}
+$manifest.layers = @($manifest.layers | Where-Object { $_.id -notin $ronetIds })
+$oldCombined = Join-Path $layerDir 'ronet.geojson.gz'
+if (Test-Path -LiteralPath $oldCombined) { Remove-Item -LiteralPath $oldCombined }
+$manifest.layers += @(
+  [ordered]@{ id='fo-ronet-cables'; name='RONET Cables'; group='FO Cables'; features=$cableFeatures.Count; source=[IO.Path]::GetFileName($KmzPath); geometryTypes=[ordered]@{ LineString=$cableFeatures.Count }; bytes=$cablesFile.bytes; bounds=$cablesBounds; color='#ffffff'; file=$cablesFile.file; defaultActive=$false },
+  [ordered]@{ id='fo-ronet-pi'; name='PI'; group='FO Cables'; features=$piFeatures.Count; source=[IO.Path]::GetFileName($KmzPath); geometryTypes=[ordered]@{ Point=$piFeatures.Count }; bytes=$piFile.bytes; bounds=$piBounds; color='#00ff00'; file=$piFile.file; defaultActive=$false },
+  [ordered]@{ id='fo-ronet-pabl'; name='PABL'; group='FO Cables'; features=$pablFeatures.Count; source=[IO.Path]::GetFileName($KmzPath); geometryTypes=[ordered]@{ Point=$pablFeatures.Count }; bytes=$pablFile.bytes; bounds=$pablBounds; color='#0000ff'; file=$pablFile.file; defaultActive=$false }
+)
 $manifest.totals.layers = $manifest.layers.Count
-$manifest.totals.features = $baseFeatures + $features.Count
-$manifest.totals.bytes = $baseBytes + $fileBytes
+$manifest.totals.features = $baseFeatures + $cableFeatures.Count + $piFeatures.Count + $pablFeatures.Count
+$manifest.totals.bytes = $baseBytes + $cablesFile.bytes + $piFile.bytes + $pablFile.bytes
 $manifest | ConvertTo-Json -Depth 100 -Compress | Set-Content -Path $manifestPath -Encoding utf8
 
-Write-Output "Features: $($features.Count)"
-Write-Output "Geometry types: $(ConvertTo-Json -InputObject $geometryTypes -Compress)"
-Write-Output "Original line colors preserved per feature; $($iconPaths.Count) KML icons extracted"
-Write-Output "Bounds: $($bounds -join ', ')"
-Write-Output "Compressed GeoJSON: $fileBytes bytes"
+Write-Output "RONET Cables: $($cableFeatures.Count) features, $($cablesFile.bytes) compressed bytes; bounds $($cablesBounds -join ', ')"
+Write-Output "PI triangles: $($piFeatures.Count) features, $($piFile.bytes) compressed bytes; bounds $($piBounds -join ', ')"
+Write-Output "PABL squares: $($pablFeatures.Count) features, $($pablFile.bytes) compressed bytes; bounds $($pablBounds -join ', ')"
+Write-Output "Original KML colors and both point icons preserved"
