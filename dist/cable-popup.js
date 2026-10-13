@@ -10,7 +10,7 @@ function cablePopup(feature,layerId,layerName) {
       const [lon1,lat1]=line[i-1],[lon2,lat2]=line[i],toRadians=value=>value*Math.PI/180,dLat=toRadians(lat2-lat1),dLon=toRadians(lon2-lon1),a=Math.sin(dLat/2)**2+Math.cos(toRadians(lat1))*Math.cos(toRadians(lat2))*Math.sin(dLon/2)**2;
       meters+=2*radius*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
     }
-    rows.push(["Lungime cablu",(meters/1000).toLocaleString("ro-RO",{minimumFractionDigits:2,maximumFractionDigits:2})+" km"]);
+    rows.push(["Distanța auto",(meters/1000).toLocaleString("ro-RO",{minimumFractionDigits:2,maximumFractionDigits:2})+" km"]);
   }
   const title=isBackbone?(layerName||"Cabluri Backbone"):(p.n||"Cablu");
   if(isBackbone)return '<div class="popup-title">'+escape(title)+'</div><div class="popup-grid">'+rows.map(([label,value])=>'<span>'+escape(label)+'</span><strong>'+escape(value===undefined||value===null||value===""?"—":value)+'</strong>').join("")+'</div>';

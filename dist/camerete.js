@@ -29,7 +29,7 @@ const CameretaMarker=L.CircleMarker.extend({
 });
 function cameretaMarker(feature,latlng){
   return new CameretaMarker(latlng,{
-    radius:6,color:"#061017",weight:1.5,
+    radius:L.Browser.touch?9:6,color:"#061017",weight:1.5,
     fillColor:feature.properties._color,fillOpacity:1,
     manhole:String(feature.properties.Type||"").trim().toLowerCase()==="manhole"
   });
