@@ -19,13 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: actions/configure-pages@v5
-      - name: Configure optional Mapbox satellite
-        env:
-          MAPBOX_PUBLIC_TOKEN: ${{ vars.MAPBOX_PUBLIC_TOKEN }}
-        run: |
-          if [ -f dist/mapbox-satellite.js ]; then
-            node -e 'require("fs").writeFileSync("dist/mapbox-config.json", JSON.stringify({accessToken:process.env.MAPBOX_PUBLIC_TOKEN||""}))'
-          fi
       - uses: actions/upload-pages-artifact@v4
         with:
           path: dist
