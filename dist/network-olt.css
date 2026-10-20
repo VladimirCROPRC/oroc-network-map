@@ -72,3 +72,19 @@ body{background:#f5f8fa;color:#19313e}
 .olt-workspace .olt-port:not([open])>summary::before{transform:rotate(0)}
 
 .panel-location{flex:none;margin:8px 12px;padding:9px 12px;min-height:42px;background:#edf3f7;color:#19313e;border:1px solid #d9e3e9;border-radius:8px;font-size:14px;cursor:pointer}.panel-location:disabled{opacity:.6}.sidebar.collapsed .panel-location{display:none}
+
+
+/* Area selection and KMZ export */
+.network-export{margin-top:10px;padding:12px;background:#f6f9fb;border:1px solid #d9e3e9;border-radius:10px}
+.network-export-title{display:block;margin-bottom:8px;color:#19313e;font-size:14px;font-weight:750}
+.export-caption{display:block;margin:3px 0 6px;color:#526b79;font-size:12px}
+.export-buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.network-export button{min-height:38px;padding:8px 10px;color:#19313e;font:inherit;font-size:13px;font-weight:700;background:#edf3f7;border:1px solid #d9e3e9;border-radius:8px;cursor:pointer}
+.network-export button:hover:not(:disabled){background:#e1ebf1}
+.network-export button.active{background:#ffc34b;border-color:#e5ad35}
+.network-export button:disabled{opacity:.5;cursor:default}
+.network-export button.export-primary{grid-column:1/-1;color:#102630;background:#ffc34b;border-color:#e5ad35}
+.network-export .export-state{min-height:1.2em;margin:7px 0;color:#526b79;font-size:12px}
+.area-selecting .leaflet-interactive,.area-selecting .leaflet-marker-icon,.area-selecting .leaflet-overlay-pane canvas{pointer-events:none!important}
+.area-rectangle-drag{touch-action:none;cursor:crosshair!important}
+@media(max-width:700px){.network-export button{min-height:40px}.network-export{margin:8px 0 10px}}
