@@ -32,7 +32,7 @@
     .hint{margin-top:5px}.toolbar{padding:8px 10px}.layer-search{padding:7px 9px;font-size:.875rem}
     @media(max-width:700px){.portal-button,.location-button,.map-actions button,.place-form button,.asset-form button,.site-form button{min-height:40px}.place-input,.asset-input,.site-input{min-height:40px}.map-style .leaflet-control-layers label{padding:5px 0}}
     #map.map-interactions-locked .leaflet-interactive{pointer-events:none!important}\n  </style>
-<link rel="stylesheet" href="network-olt.css?v=20261008-integrated-5"></head>
+<link rel="stylesheet" href="network-olt.css?v=20261020-kmz-1"></head>
 <body>
   <div id="map" role="application" aria-label="Hartă cu rezultate într-o rază de 10 kilometri"></div>
   <aside class="sidebar" id="sidebar" aria-label="Căutare și layere">
@@ -53,7 +53,15 @@
 <p id="olt-search-count" class="olt-muted" aria-live="polite">Se încarcă…</p>
 <div id="olt-results" class="olt-results"></div>
 <div id="olt-detail" aria-live="polite"><p class="olt-muted">Selectează un site pentru a vedea OLT-urile și porturile.</p></div>
-<div id="olt-port-panel"></div></section><section id="tools-pane" class="workspace-pane tools-pane" hidden><a class="portal-button" href="https://portal.proconect.online" target="_blank" rel="noopener noreferrer">Portal PRO APPS</a><div class="map-style" id="map-style" role="group" aria-label="Stil hartă"><span class="map-style-title">Stil hartă</span></div><div class="map-actions"><button id="measure" type="button">📏 Liniar</button><button id="clear-markers" type="button">Șterge marcajele</button></div></section>
+<div id="olt-port-panel"></div></section><section id="tools-pane" class="workspace-pane tools-pane" hidden><a class="portal-button" href="https://portal.proconect.online" target="_blank" rel="noopener noreferrer">Portal PRO APPS</a><div class="map-style" id="map-style" role="group" aria-label="Stil hartă"><span class="map-style-title">Stil hartă</span></div><div class="map-actions"><button id="measure" type="button">📏 Liniar</button><button id="clear-markers" type="button">Șterge marcajele</button></div>
+  <section class="network-export" aria-labelledby="network-export-title">
+    <strong id="network-export-title" class="network-export-title">Export elemente rețea</strong>
+    <span class="export-caption">Selectează zona</span>
+    <div class="export-buttons"><button id="select-rectangle" type="button">▭ Dreptunghi</button><button id="select-polygon" type="button">⬠ Poligon</button></div>
+    <span id="export-ready-label" class="export-caption" hidden>KMZ pregătit</span>
+    <p id="export-state" class="export-state" aria-live="polite">Alege o zonă pe hartă.</p>
+    <div class="export-buttons"><button id="finish-polygon" type="button" disabled>Finalizează</button><button id="cancel-selection" type="button" disabled>Anulează</button><button id="export-kmz" class="export-primary" type="button" disabled>Exportă KMZ</button></div>
+  </section></section>
   </aside>
   <div class="status" id="status">Se pregătesc layerele…</div>
   <script src="vendor/leaflet/leaflet.js"></script>
@@ -112,7 +120,7 @@
 
 document.addEventListener("click",event=>{const button=event.target.closest(".open-site-olt");if(button)window.NetworkOlt?.selectCode(button.dataset.siteCode)});
 function networkSiteLinks(lat,lng){const point=encodeURIComponent(lat+','+lng);return '<div class="location-links"><a href="https://www.google.com/maps/search/?api=1&query='+point+'" target="_blank" rel="noopener noreferrer">Google Maps</a><a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint='+point+'" target="_blank" rel="noopener noreferrer">Street View</a></div>'}
-window.NetworkMapBridge={map,
+window.NetworkMapBridge={map,active,getData,featureColor,setMeasuring,isMeasuring:()=>measuring,getManifest:()=>manifest,
  showPanel(name){document.querySelectorAll('[data-workspace-panel]').forEach(button=>{const on=button.dataset.workspacePanel===name;button.classList.toggle('selected',on);button.setAttribute('aria-selected',String(on))});for(const id of ['network','olt','tools'])document.getElementById(id+'-pane').hidden=id!==name;map.invalidateSize()},
  fitOptions(){return matchMedia('(max-width:700px)').matches?{paddingTopLeft:[24,30],paddingBottomRight:[24,(document.getElementById('sidebar').classList.contains('collapsed')?89:30)],maxZoom:16}:{padding:[30,30],maxZoom:16}},
  async focusSite(point,label){const run=this.focusRun=(this.focusRun||0)+1;for(let i=0;!manifest&&i<100;i++)await new Promise(r=>setTimeout(r,100));if(manifest&&run===this.focusRun)await searchArea({lat:point[0],lng:point[1]},label,{pin:false,fit:false})}
@@ -123,6 +131,6 @@ document.getElementById('collapse').addEventListener('click',event=>{const expan
 
     if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));
   </script>
-<script src="network-olt.js?v=20261008-integrated-5"></script></body></html>
+<script src="map-selection.js?v=20261020-kmz-1"></script><script src="network-olt.js?v=20261020-kmz-1"></script></body></html>
 
 
