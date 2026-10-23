@@ -88,3 +88,5 @@ body{background:#f5f8fa;color:#19313e}
 .area-selecting .leaflet-interactive,.area-selecting .leaflet-marker-icon,.area-selecting .leaflet-overlay-pane canvas{pointer-events:none!important}
 .area-rectangle-drag{touch-action:none;cursor:crosshair!important}
 @media(max-width:700px){.network-export button{min-height:40px}.network-export{margin:8px 0 10px}}
+
+.area-limit{display:block;color:#526b79;font-size:12px;font-weight:600;line-height:1.35;margin:0 0 7px}
