@@ -32,7 +32,7 @@
     .hint{margin-top:5px}.toolbar{padding:8px 10px}.layer-search{padding:7px 9px;font-size:.875rem}
     @media(max-width:700px){.portal-button,.location-button,.map-actions button,.place-form button,.asset-form button,.site-form button{min-height:40px}.place-input,.asset-input,.site-input{min-height:40px}.map-style .leaflet-control-layers label{padding:5px 0}}
     #map.map-interactions-locked .leaflet-interactive{pointer-events:none!important}\n  </style>
-<link rel="stylesheet" href="network-olt.css?v=20261020-kmz-1"></head>
+<link rel="stylesheet" href="network-olt.css?v=20261023-kmz-area25-1"></head>
 <body>
   <div id="map" role="application" aria-label="Hartă cu rezultate într-o rază de 10 kilometri"></div>
   <aside class="sidebar" id="sidebar" aria-label="Căutare și layere">
@@ -56,7 +56,7 @@
 <div id="olt-port-panel"></div></section><section id="tools-pane" class="workspace-pane tools-pane" hidden><a class="portal-button" href="https://portal.proconect.online" target="_blank" rel="noopener noreferrer">Portal PRO APPS</a><div class="map-style" id="map-style" role="group" aria-label="Stil hartă"><span class="map-style-title">Stil hartă</span></div><div class="map-actions"><button id="measure" type="button">📏 Liniar</button><button id="clear-markers" type="button">Șterge marcajele</button></div>
   <section class="network-export" aria-labelledby="network-export-title">
     <strong id="network-export-title" class="network-export-title">Export elemente rețea</strong>
-    <span class="export-caption">Selectează zona</span>
+    <span class="export-caption">Selectează zona</span><span class="export-caption area-limit">Suprafață maximă: 25 km²</span>
     <div class="export-buttons"><button id="select-rectangle" type="button">▭ Dreptunghi</button><button id="select-polygon" type="button">⬠ Poligon</button></div>
     <span id="export-ready-label" class="export-caption" hidden>KMZ pregătit</span>
     <p id="export-state" class="export-state" aria-live="polite">Alege o zonă pe hartă.</p>
@@ -131,6 +131,6 @@ document.getElementById('collapse').addEventListener('click',event=>{const expan
 
     if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));
   </script>
-<script src="map-selection.js?v=20261020-kmz-1"></script><script src="network-olt.js?v=20261020-kmz-1"></script></body></html>
+<script src="map-selection.js?v=20261023-kmz-area25-1"></script><script src="network-olt.js?v=20261023-kmz-area25-1"></script></body></html>
 
 
